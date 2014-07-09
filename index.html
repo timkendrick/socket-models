@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Live model test</title>
+	<script src="//cdn.socket.io/socket.io-1.0.6.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.19/angular.min.js"></script>
+	<script src="src/services.js"></script>
+	<script src="src/app.js"></script>
+	<script>
+		var bootstrap = angular.module('bootstrap', ['test-app']);
+		bootstrap.value('restApiUrl', 'http://rest.example.com');
+		bootstrap.value('socketApiUrl', 'ws://socket.example.com:1234');
+	</script>
+</head>
+<body ng-app="bootstrap">
+	<div ng-controller="TestCtrl"></div>
+</body>
+</html>
