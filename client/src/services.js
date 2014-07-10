@@ -220,7 +220,7 @@ services.service('Subscriber', function($q) {
 
 		var initialPromise = $q.when(initialValue);
 		initialPromise.then(
-			function(value) { deferred.resolve(value); },
+			function(value) { promise.value = value; deferred.resolve(value); },
 			function(error) { deferred.reject(error); },
 			function(value) { deferred.notify(value); }
 		);
@@ -255,6 +255,7 @@ services.service('Subscriber', function($q) {
 		var activeSubscription = null;
 
 		parentPromise.then(function(value) {
+			subscription.value = value;
 			activeSubscription = subscribeFunction(value, subscribeOptions);
 			return activeSubscription;
 		}).then(
