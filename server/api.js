@@ -8,7 +8,7 @@ module.exports = function(dataService) {
 
 	app.get('/:collection/:id', function(req, res, next) {
 		var collection = req.params.collection;
-		var itemId = Number(req.params.id);
+		var itemId = req.params.id;
 		if (!dataService.hasOwnProperty(collection)) { return res.send(404); }
 
 		var collectionService = dataService[collection];
