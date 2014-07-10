@@ -9,24 +9,33 @@ function QuoteService() {
 
 	this.create = function(id) {
 		if (!id) { throw new Error('No ID specified'); }
-		if (this.items[id]) { throw new Error('ID "%d" already exists', id); }
+		if (this.exists(id)) { throw new Error('ID "%d" already exists', id); }
 
 		var quote = _createQuote(id);
 		this.items[id] = quote;
 		return quote;
 	};
 
+	this.exists = function(id) {
+		return Boolean(this.items[id]);
+	};
+
 	this.get = function(id) {
 		if (!id) { throw new Error('No ID specified'); }
-		id = (id === 'featured' ? 1 : Number(id));
+		console.log('Getting item ' + id, this.items[id]);
+		return this.items[id] || this.create(id);
+	};
 
-		if (!this.items[id]) { return this.create(id); }
-		return this.items[id];
+	this.getFeatured = function() {
+		var featuredId = 1 + Math.floor(Math.random() * 100);
+		return this.get(featuredId) || this.create(featuredId);
 	};
 
 	var updaters = [];
 
 	this.subscribe = function(id, fields, callback) {
+		if (!this.exists(id)) { throw new Error('Invalid ID specified: "' + id + '"'); }
+
 		var quote = this.get(id);
 
 		if (!updaters[id]) {

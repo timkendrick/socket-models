@@ -4,23 +4,18 @@ var http = require('http');
 var express = require('express');
 var open = require('open');
 
-var api = require('./api');
 var socket = require('./socket');
-var quoteService = require('./services/quote');
+var api = require('./routes/api');
 
 var port = 3000;
 
 var app = express();
 
-var dataService = {
-	quote: quoteService
-};
-
-app.use('/api', api(dataService));
+app.use('/api', api);
 app.use(express.static(__dirname + '/../client'));
 
 var server = http.Server(app);
-socket(server, dataService);
+socket(server);
 server.listen(port, function() {
 	console.log('HTTP server listening on port ' + port);
 

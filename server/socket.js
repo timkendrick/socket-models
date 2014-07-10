@@ -2,11 +2,18 @@
 
 var io = require('socket.io');
 
-module.exports = function(httpServer, dataService) {
+var QuoteService = require('./services/QuoteService');
+
+
+module.exports = function(httpServer) {
 	var server = io(httpServer);
 
+	var services = {
+		quote: QuoteService
+	};
+
 	_initLogging(server);
-	_initApi(server, dataService);
+	_initApi(server, services);
 
 
 	function _initLogging(server) {
@@ -25,7 +32,7 @@ module.exports = function(httpServer, dataService) {
 		});
 	}
 
-	function _initApi(socket, dataService) {
+	function _initApi(socket, services) {
 		server.on('connection', function(socket) {
 
 			var subscriptions = {};
@@ -33,9 +40,9 @@ module.exports = function(httpServer, dataService) {
 			socket.on('subscribe', function(token, type, id, fields) {
 				if (!token) { console.error('No subscription token specified'); }
 				if (!/[0-9a-f]{40}/.test(token)) { console.error('Invalid subscription token specified: "%s"', token); }
-				if (!dataService.hasOwnProperty(type)) { console.error('Invalid collection type: "%s"', type); }
+				if (!services.hasOwnProperty(type)) { console.error('Invalid collection type: "%s"', type); }
 
-				var collectionService = dataService[type];
+				var collectionService = services[type];
 				var subscription = collectionService.subscribe(id, fields, _handleModelValuesUpdated);
 				subscriptions[token] = subscription;
 
