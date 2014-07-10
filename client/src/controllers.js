@@ -2,7 +2,6 @@
 
 var app = angular.module('test-app', ['services']);
 
-
 app.controller('TestCtrl', function TestCtrl($scope, QuoteService, ModelService, quoteIds) {
 
 		$scope.featuredQuote = ModelService.subscribe(QuoteService.getFeaturedQuote(), ['field1', 'field2', 'field3']);

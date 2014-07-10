@@ -1,6 +1,6 @@
 'use strict';
 
-var services = angular.module('services', []);
+var services = angular.module('services', ['models']);
 
 
 services.service('QuoteService', function(ModelService) {
@@ -20,7 +20,7 @@ services.service('QuoteService', function(ModelService) {
 });
 
 
-services.service('ModelService', function($http, SocketService, restApiUrl) {
+services.service('ModelService', function($http, ModelSerializationService, SocketService, restApiUrl) {
 
 	function ModelService() {
 
@@ -55,7 +55,7 @@ services.service('ModelService', function($http, SocketService, restApiUrl) {
 			});
 
 			subscription.get = function() {
-				return resolvedValue.values;
+				return resolvedValue;
 			};
 
 			subscription.unsubscribe = function() {
@@ -79,7 +79,7 @@ services.service('ModelService', function($http, SocketService, restApiUrl) {
 				requestType: 'json',
 				responseType: 'json'
 			}).then(function(response) {
-				resolvedValue = response.data;
+				resolvedValue = ModelSerializationService.deserialize(response.data);
 				return resolvedValue;
 			});
 
@@ -95,7 +95,65 @@ services.service('ModelService', function($http, SocketService, restApiUrl) {
 });
 
 
-services.service('SocketService', function($q, socketApiUrl, AsyncDigestService) {
+services.service('ModelSerializationService', function(ModelMappings) {
+
+	function ModelSerializationService() {
+
+		this.serialize = function(model) {
+			if (!model) { return null; }
+
+			var modelId = this.getModelId(model);
+			var typeName = this.getModelType(model);
+
+			return {
+				id: modelId,
+				type: typeName,
+				value: _serializeObject(model)
+			};
+
+			function _serializeObject(object) {
+				return angular.copy(object);
+			}
+		};
+
+		this.deserialize = function(data) {
+			if (!data) { return null; }
+
+			var typeName = data.type;
+			var modelId = data.id;
+			var fieldValues = data.value;
+
+
+			var MappedType = ModelMappings[typeName] || Object;
+			var instance = new MappedType();
+			instance.$$$id = modelId;
+			for (var property in fieldValues) {
+				instance[property] = angular.copy(fieldValues[property]);
+			}
+			return instance;
+		};
+
+		this.getModelId = function(model) {
+			return model.$$$id;
+		};
+
+		this.getModelType = function(model) {
+			var modelType = model.constructor;
+			for (var typeName in ModelMappings) {
+				var MappedType = ModelMappings[typeName];
+				if (MappedType === modelType) {
+					return typeName;
+				}
+			}
+			return null;
+		};
+	}
+
+	return new ModelSerializationService();
+});
+
+
+services.service('SocketService', function($q, socketApiUrl, AsyncDigestService, ModelSerializationService) {
 
 	function SocketService() {
 		var subscriptions = [];
@@ -104,8 +162,10 @@ services.service('SocketService', function($q, socketApiUrl, AsyncDigestService)
 		this.subscribe = function(model, watchedFields) {
 			if (!model) { throw new Error('No model specified'); }
 
-			var type = model.type;
-			var id = model.id;
+			var type = ModelSerializationService.getModelType(model);
+			if (!type) { throw new Error('Invalid model type'); }
+
+			var id = ModelSerializationService.getModelId(model);
 			var fields = (watchedFields ? watchedFields.slice() : null);
 			var token = this.generateToken();
 
@@ -144,7 +204,7 @@ services.service('SocketService', function($q, socketApiUrl, AsyncDigestService)
 				AsyncDigestService.apply(function() {
 					var changes = changeset.changes;
 					for (var field in changes) {
-						model.values[field] = changes[field];
+						model[field] = changes[field];
 					}
 					deferred.notify(changes);
 				});

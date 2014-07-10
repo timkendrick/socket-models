@@ -111,12 +111,12 @@ function ModelService() {
 
 		function _updateModelValues(model, fields) {
 			var numUpdatedFields = 1 + Math.floor(Math.random() * fields.length);
-			var fieldNames = Object.keys(model.values);
+			var fieldNames = Object.keys(model.value);
 			var updatedFieldNames = _pickRandomArrayItems(fieldNames, numUpdatedFields);
 
 			var changes = updatedFieldNames.reduce(function(changes, fieldName) {
 				var updatedValue = _generateRandomValue();
-				model.values[fieldName] = updatedValue;
+				model.value[fieldName] = updatedValue;
 				changes[fieldName] = updatedValue;
 				return changes;
 			}, {});

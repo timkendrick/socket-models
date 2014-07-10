@@ -33,11 +33,11 @@ function QuoteService() {
 		var quote = {
 			type: 'quote',
 			id: id,
-			values: _generateRandomQuoteValues(FIELD_NAMES)
+			value: _generateRandomQuoteFieldValues(FIELD_NAMES)
 		};
 		return quote;
 
-		function _generateRandomQuoteValues(fieldNames) {
+		function _generateRandomQuoteFieldValues(fieldNames) {
 			return fieldNames.reduce(function(values, fieldName) {
 				values[fieldName] = _generateRandomValue();
 				return values;

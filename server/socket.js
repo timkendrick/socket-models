@@ -14,17 +14,19 @@ module.exports = function(httpServer) {
 	};
 
 	_initLogging(server);
-	_initApi(server, services);
+	_initApi(server, services, function(error) {
+		console.error(error.toString());
+	});
 
 
 	function _initLogging(server) {
 		var numUsers = 0;
 		server.on('connection', function(socket) {
 			numUsers++;
-			console.log('Socket user connected (%s)', _getActiveUsersLabel(numUsers));
+			console.info('Socket user connected (%s)', _getActiveUsersLabel(numUsers));
 			socket.on('disconnect', function() {
 				numUsers--;
-				console.log('Socket user disconnected (%s)', _getActiveUsersLabel(numUsers));
+				console.info('Socket user disconnected (%s)', _getActiveUsersLabel(numUsers));
 			});
 
 			function _getActiveUsersLabel(numUsers) {
@@ -33,22 +35,22 @@ module.exports = function(httpServer) {
 		});
 	}
 
-	function _initApi(socket, services) {
+	function _initApi(socket, services, callback) {
 		server.on('connection', function(socket) {
 
 			var subscriptions = {};
 
 			socket.on('subscribe', function(token, type, id, fields) {
-				if (!token) { console.error('No subscription token specified'); }
-				if (!/[0-9a-f]{40}/.test(token)) { console.error('Invalid subscription token specified: "%s"', token); }
-				if (!services.hasOwnProperty(type)) { console.error('Invalid collection type: "%s"', type); }
+				if (!token) { return callback(new Error('No subscription token specified')); }
+				if (!/[0-9a-f]{40}/.test(token)) { return callback(new Error('Invalid subscription token specified: "' + token + '"')); }
+				if (!services.hasOwnProperty(type)) { return callback(new Error('Invalid collection type: "' + type + '"')); }
 
 				var collectionService = services[type];
 				var model = collectionService.get(id);
 				var subscription = ModelService.subscribe(model, fields, _handleModelValuesUpdated);
 				subscriptions[token] = subscription;
 
-				console.log('Subscribed to updates for "%s:%d" (%s)', type, id, token);
+				console.info('Subscribed to updates for "%s:%d" (%s)', type, id, token);
 
 				function _handleModelValuesUpdated(changes) {
 					_emitChanges(token, type, id, changes);
@@ -56,14 +58,14 @@ module.exports = function(httpServer) {
 			});
 
 			socket.on('unsubscribe', function(token) {
-				if (!token) { console.error('No subscription token specified'); }
-				if (!subscriptions.hasOwnProperty(token)) { console.error('Invalid subscription token specified: "%s"', token); }
+				if (!token) { return callback(new Error('No subscription token specified')); }
+				if (!subscriptions.hasOwnProperty(token)) { return callback(new Error('Invalid subscription token specified: "' + token + '"', token)); }
 
 				var subscription = subscriptions[token];
 				subscription.unsubscribe();
 				delete subscriptions[token];
 
-				console.log('Unsubscribed from %s', token);
+				console.info('Unsubscribed from %s', token);
 			});
 
 			socket.on('disconnect', function() {
@@ -74,12 +76,12 @@ module.exports = function(httpServer) {
 					numSubscriptions++;
 				}
 				if (numSubscriptions > 0) {
-					console.log('Unsubscribed from %d subscription(s)', numSubscriptions);
+					console.info('Unsubscribed from %d subscription(s)', numSubscriptions);
 				}
 			});
 
 			function _emitChanges(token, type, id, changes) {
-				console.log('Emitting to ' + token);
+				console.info('Emitting updates to %s', token);
 				socket.emit(token, { token: token, type: type, id: id, changes: changes });
 			}
 		});
