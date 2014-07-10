@@ -18,6 +18,7 @@ function QuoteService() {
 
 	this.get = function(id) {
 		if (!id) { throw new Error('No ID specified'); }
+		id = (id === 'featured' ? 1 : Number(id));
 
 		if (!this.items[id]) { return this.create(id); }
 		return this.items[id];
