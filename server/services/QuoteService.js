@@ -22,7 +22,7 @@ function QuoteService() {
 
 	this.get = function(id) {
 		if (!id) { throw new Error('No ID specified'); }
-		console.log('Getting item ' + id, this.items[id]);
+
 		return this.items[id] || this.create(id);
 	};
 
