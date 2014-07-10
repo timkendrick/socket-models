@@ -22,9 +22,9 @@
 		<div class="jumbotron">
 			<h1>Today's top quote:</h1>
 			<p>
-				<strong>Field 1:</strong> <em style="padding-right: 50px;">{{ featuredQuote.get().values.field1 }}</em>
-				<strong>Field 2:</strong> <em style="padding-right: 50px;">{{ featuredQuote.get().values.field2 }}</em>
-				<strong>Field 3:</strong> <em style="padding-right: 50px;">{{ featuredQuote.get().values.field3 }}</em>
+				<strong>Field 1:</strong> <em style="padding-right: 50px;">{{ featuredQuote.get().field1 }}</em>
+				<strong>Field 2:</strong> <em style="padding-right: 50px;">{{ featuredQuote.get().field2 }}</em>
+				<strong>Field 3:</strong> <em style="padding-right: 50px;">{{ featuredQuote.get().field3 }}</em>
 			</p>
 		</div>
 
@@ -46,7 +46,7 @@
 				<tbody>
 					<tr ng:repeat="quote in quotes">
 						<td ng:if="!quote.get()">{{ '---' }}</td>
-						<td ng:repeat="(key, value) in quote.get().values">{{ value || '---' }}</td>
+						<td ng:repeat="(key, value) in quote.get()">{{ value || '---' }}</td>
 					</tr>
 				</tbody>
 			</table>

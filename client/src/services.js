@@ -55,7 +55,7 @@ services.service('ModelService', function($http, SocketService, restApiUrl) {
 			});
 
 			subscription.get = function() {
-				return resolvedValue;
+				return resolvedValue.values;
 			};
 
 			subscription.unsubscribe = function() {
