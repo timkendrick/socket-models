@@ -226,17 +226,21 @@ services.service('Subscriber', function($q) {
 		);
 
 		promise.done = function(handler) {
-			promise.then(handler);
+			promise.then(
+				angular.bind(promise, handler)
+			);
 			return promise;
 		};
 
 		promise.error = function(handler) {
-			promise.catch(handler);
+			promise.catch(
+				angular.bind(promise, handler)
+			);
 			return promise;
 		};
 
 		promise.cancel = function() {
-			if (cancelFunction) { cancelFunction(initialValue); }
+			if (cancelFunction) { cancelFunction.call(promise, initialValue); }
 			deferred.reject();
 		};
 
@@ -256,7 +260,7 @@ services.service('Subscriber', function($q) {
 
 		parentPromise.then(function(value) {
 			subscription.value = value;
-			activeSubscription = subscribeFunction(value, subscribeOptions);
+			activeSubscription = subscribeFunction.call(subscription, subscribeOptions);
 			return activeSubscription;
 		}).then(
 			function(value) { deferred.resolve(value); },
@@ -265,28 +269,37 @@ services.service('Subscriber', function($q) {
 		);
 
 		subscription.ready = function(handler) {
-			parentPromise.then(handler, function(error) { deferred.reject(error); });
+			parentPromise.then(
+				angular.bind(subscription, handler),
+				function(error) { deferred.reject(error); }
+			);
 			return subscription;
 		};
 
 		subscription.done = function(handler) {
-			subscription.then(handler);
+			subscription.then(
+				angular.bind(subscription, handler)
+			);
 			return subscription;
 		};
 
 		subscription.error = function(handler) {
-			subscription.catch(handler);
+			subscription.catch(
+				angular.bind(subscription, handler)
+			);
 			return subscription;
 		};
 
 		subscription.listen = function(handler) {
-			subscription.then(null, null, handler);
+			subscription.then(null, null,
+				angular.bind(subscription, handler)
+			);
 			return subscription;
 		};
 
 		subscription.cancel = function() {
 			if (activeSubscription) {
-				if (unsubscribeFunction) { unsubscribeFunction(activeSubscription); }
+				if (unsubscribeFunction) { unsubscribeFunction.call(subscription, activeSubscription); }
 				deferred.resolve();
 			} else {
 				parentPromise.cancel();
@@ -302,7 +315,7 @@ services.service('ModelService', function(RestService, SocketService, Subscriber
 
 	function ModelService() {
 
-		var subscribe = function(model) { return SocketService.subscribe(model); };
+		var subscribe = function(options) { return SocketService.subscribe(this.value); };
 		var unsubscribe = function(subscription) { return SocketService.unsubscribe(subscription); };
 		var cancelRequest = function(request) { return RestService.cancelRequest(request); };
 
