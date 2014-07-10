@@ -2,6 +2,7 @@
 
 var io = require('socket.io');
 
+var ModelService = require('./services/ModelService');
 var QuoteService = require('./services/QuoteService');
 
 
@@ -43,7 +44,8 @@ module.exports = function(httpServer) {
 				if (!services.hasOwnProperty(type)) { console.error('Invalid collection type: "%s"', type); }
 
 				var collectionService = services[type];
-				var subscription = collectionService.subscribe(id, fields, _handleModelValuesUpdated);
+				var model = collectionService.get(id);
+				var subscription = ModelService.subscribe(model, fields, _handleModelValuesUpdated);
 				subscriptions[token] = subscription;
 
 				console.log('Subscribed to updates for "%s:%d" (%s)', type, id, token);
@@ -78,7 +80,7 @@ module.exports = function(httpServer) {
 
 			function _emitChanges(token, type, id, changes) {
 				console.log('Emitting to ' + token);
-				socket.emit('update', { token: token, type: type, id: id, changes: changes });
+				socket.emit(token, { token: token, type: type, id: id, changes: changes });
 			}
 		});
 	}
