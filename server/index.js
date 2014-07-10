@@ -2,6 +2,7 @@
 
 var http = require('http');
 var express = require('express');
+var open = require('open');
 
 var api = require('./api');
 var socket = require('./socket');
@@ -22,4 +23,6 @@ var server = http.Server(app);
 socket(server, dataService);
 server.listen(port, function() {
 	console.log('HTTP server listening on port ' + port);
+
+	open('http://localhost:' + port + '/');
 });

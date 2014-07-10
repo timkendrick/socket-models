@@ -21,6 +21,7 @@
   "homepage": "https://github.com/timkendrick/socket-models",
   "dependencies": {
     "express": "^4.5.1",
+    "open": "0.0.5",
     "socket.io": "^1.0.6"
   }
 }
