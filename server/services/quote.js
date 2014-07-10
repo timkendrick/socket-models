@@ -10,7 +10,7 @@ function QuoteService() {
 	this.create = function(id) {
 		if (!id) { throw new Error('No ID specified'); }
 		if (this.items[id]) { throw new Error('ID "%d" already exists', id); }
-		
+
 		var quote = _createQuote(id);
 		this.items[id] = quote;
 		return quote;
@@ -18,16 +18,16 @@ function QuoteService() {
 
 	this.get = function(id) {
 		if (!id) { throw new Error('No ID specified'); }
-		
+
 		if (!this.items[id]) { return this.create(id); }
 		return this.items[id];
 	};
 
 	var updaters = [];
-	
+
 	this.subscribe = function(id, fields, callback) {
 		var quote = this.get(id);
-		
+
 		if (!updaters[id]) {
 			var updater = {
 				quote: quote,
