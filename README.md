@@ -7,12 +7,12 @@ Proof-of-concept for live-updating app models via a combination of REST and WebS
 
 ```bash
 # Clone the github repository
-git clone git@github.com:timkendrick/socket-models.git
+git clone https://github.com/timkendrick/socket-models.git
 
 # Change the current directory to the repository folder
 cd socket-models
 
-# Install NPM dependencies
+# Install NPM dependencies (requires Node.js)
 npm install
 
 # Launch the app at http://localhost:3000/
