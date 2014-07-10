@@ -3,31 +3,53 @@
 var app = angular.module('test-app', ['services']);
 
 
-app.controller('TestCtrl', function TestCtrl($scope, DocketService, QuoteService) {
-		$scope.docket = null;
-		$scope.quote = null;
+app.controller('TestCtrl', function TestCtrl($scope, DocketService, QuoteService, numQuotes) {
 
-		var quoteId = 1;
-
-		// var docketId = 1;
-		// var docketRequest = DocketService.retrieve(docketId)
-		// 	.done(function(model) {
-		// 		$scope.docket = model;
-		// 	});
+		_initFeaturedQuote();
+		_initAllQuotes();
 
 
-		var quoteSubscription = QuoteService.retrieve(quoteId).done(function(model) {
-				window.console.info('Loaded quote', model);
-			})
-			.subscribe(['value1', 'value2', 'value3']).listen(function(changes) {
-				window.console.info('Updated quote', changes);
+		function _initFeaturedQuote() {
+			$scope.featuredQuote = null;
+
+			var featuredQuoteSubscription = QuoteService.retrieve(1)
+				.done(function(model) { $scope.featuredQuote = model; })
+				.subscribe(['value1', 'value2', 'value3']);
+
+
+			$scope.$on('destroy', function() {
+				featuredQuoteSubscription.cancel();
+			});
+		}
+
+
+		function _initAllQuotes() {
+			var quoteSubscriptions = _loadQuotes(numQuotes);
+
+			var quoteValues = quoteSubscriptions.map(function(quoteSubscription, index) {
+				quoteSubscription.ready(function(model) { quoteValues[index] = model; });
+				return { };
 			});
 
+			$scope.$on('$destroy', function() {
+				quoteSubscriptions.forEach(function(quoteSubscription) {
+					quoteSubscription.cancel();
+				});
+			});
 
-		$scope.$on('$destroy', function() {
-			// docketRequest.cancel();
-			quoteSubscription.cancel();
-		});
+			$scope.allQuotes = quoteValues;
+
+
+			function _loadQuotes(numQuotes) {
+				var quoteSubscriptions = [];
+				for (var i = 0; i < numQuotes; i++) {
+					var quoteId = i + 1;
+					var quoteSubscription = QuoteService.retrieve(quoteId).subscribe();
+					quoteSubscriptions.push(quoteSubscription);
+				}
+				return quoteSubscriptions;
+			}	
+		}
 	}
 );
 
