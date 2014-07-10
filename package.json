@@ -1,0 +1,26 @@
+{
+  "name": "socket-models",
+  "version": "0.0.0",
+  "description": "Live-updating model test (work in progress) ",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/timkendrick/socket-models.git"
+  },
+  "author": {
+    "name": "Tim Kendrick",
+    "email": "tim@fathomlondon.com"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/timkendrick/socket-models/issues"
+  },
+  "homepage": "https://github.com/timkendrick/socket-models",
+  "dependencies": {
+    "express": "^4.5.1",
+    "socket.io": "^1.0.6"
+  }
+}
