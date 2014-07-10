@@ -2,84 +2,96 @@
 
 var services = angular.module('services', []);
 
-services.service('RestService', function($q, $http, restApiUrl) {
 
-	function RestService() {
-		var baseUrl = restApiUrl;
-		var activeRequests = [];
+services.service('QuoteService', function(ModelService) {
 
+ 	function QuoteService() {
 
-		this.get = function(endpoint) {
-			var method = 'GET';
-			return _send(method, endpoint);
+		this.getQuote = function(id) {
+			return ModelService.retrieve('quote', id);
 		};
 
-		this.post = function(endpoint, data) {
-			var method = 'POST';
-			return _send(method, endpoint, data);
+		this.getFeaturedQuote = function(id) {
+			return ModelService.retrieve('quote', 'featured');
+		};
+	}
+
+	return new QuoteService();
+});
+
+
+services.service('ModelService', function($http, SocketService, restApiUrl) {
+
+	function ModelService() {
+
+		this.create = function(collection, model) {
+			var endpoint = _getEndpointPath(collection);
+			return _sendRequest('POST', endpoint, model);
 		};
 
-		this.put = function(endpoint, data) {
-			var method = 'PUT';
-			return _send(method, endpoint, data);
+		this.retrieve = function(collection, id) {
+			var endpoint = _getEndpointPath(collection, id);
+			return _sendRequest('GET', endpoint);
 		};
 
-		this.delete = function(endpoint) {
-			var method = 'DELETE';
-			return _send(method, endpoint);
+		this.update = function(collection, id, model) {
+			var endpoint = _getEndpointPath(collection, id);
+			return _sendRequest('PUT', endpoint, model);
 		};
 
-		this.cancelRequest = function(request) {
-			return _cancelRequest(request);
+		this.delete = function(collection, id) {
+			var endpoint = _getEndpointPath(collection, id);
+			return _sendRequest('DELETE', endpoint);
+		};
+
+		this.subscribe = function(request, fields) {
+			var resolvedValue = null;
+			var socketSubscription = null;
+
+			var subscription = request.then(function(model) {
+				resolvedValue = model;
+				socketSubscription = SocketService.subscribe(model, fields);
+				return socketSubscription;
+			});
+
+			subscription.get = function() {
+				return resolvedValue;
+			};
+
+			subscription.unsubscribe = function() {
+				return SocketService.unsubscribe(subscription);
+			};
+
+			return subscription;
 		};
 
 
-		function _send(method, endpoint, data) {
-			var canceler = $q.defer();
+		function _getEndpointPath(collection, id) {
+			return collection + (id || (id === 0) ? '/' + id : '');
+		}
 
+		function _sendRequest(method, endpoint, data) {
+			var resolvedValue = null;
 			var request = $http({
 				method: method,
-				url: baseUrl + '/' + endpoint,
+				url: restApiUrl + '/' + endpoint,
 				data: data,
 				requestType: 'json',
-				responseType: 'json',
-				timeout: canceler
+				responseType: 'json'
 			}).then(function(response) {
-				return response.data;
+				resolvedValue = response.data;
+				return resolvedValue;
 			});
 
-			var requestMetadata = {
-				request: request,
-				cancel: function() {
-					canceler.resolve();
-				}
+			request.get = function() {
+				return resolvedValue;
 			};
-			activeRequests.push(requestMetadata);
-
-			request.finally(function() {
-				var index = activeRequests.indexOf(requestMetadata);
-				if (index !== -1) { activeRequests.splice(index, 1); }
-			});
 
 			return request;
 		}
-
-
-		function _cancelRequest(request) {
-			var requestMetadata = _getRequestMetadata(request);
-			if (!requestMetadata) { return; }
-			requestMetadata.cancel();
-
-
-			function _getRequestMetadata(request) {
-				return activeRequests.filter(function(requestMetadata) {
-					return (requestMetadata.request === request);
-				})[0] || null;
-			}
-		}
 	}
 
-	return new RestService();
+	return new ModelService();
 });
 
 
@@ -202,153 +214,4 @@ services.service('SocketService', function($rootScope, $q, socketApiUrl) {
 	}
 
 	return new SocketService();
-});
-
-
-services.service('Subscriber', function($q) {
-
-	return {
-		create: Subscriber
-	};
-
-
-	function Subscriber(initialValue, subscribeFunction, unsubscribeFunction, cancelFunction) {
-		if (!subscribeFunction) { throw new Error('No subscribe function specified'); }
-
-		var deferred = $q.defer();
-		var promise = deferred.promise;
-
-		var initialPromise = $q.when(initialValue);
-		initialPromise.then(
-			function(value) { promise.value = value; deferred.resolve(value); },
-			function(error) { deferred.reject(error); },
-			function(value) { deferred.notify(value); }
-		);
-
-		promise.done = function(handler) {
-			promise.then(
-				angular.bind(promise, handler)
-			);
-			return promise;
-		};
-
-		promise.error = function(handler) {
-			promise.catch(
-				angular.bind(promise, handler)
-			);
-			return promise;
-		};
-
-		promise.cancel = function() {
-			if (cancelFunction) { cancelFunction.call(promise, initialValue); }
-			deferred.reject();
-		};
-
-		promise.subscribe = function(options) {
-			return new Subscription(promise, subscribeFunction, options, unsubscribeFunction);
-		};
-
-		return promise;
-	}
-
-
-	function Subscription(parentPromise, subscribeFunction, subscribeOptions, unsubscribeFunction) {
-		var deferred = $q.defer();
-		var subscription = deferred.promise;
-
-		var activeSubscription = null;
-
-		parentPromise.then(function(value) {
-			subscription.value = value;
-			activeSubscription = subscribeFunction.call(subscription, subscribeOptions);
-			return activeSubscription;
-		}).then(
-			function(value) { deferred.resolve(value); },
-			function(error) { deferred.reject(error); },
-			function(value) { deferred.notify(value); }
-		);
-
-		subscription.ready = function(handler) {
-			parentPromise.then(
-				angular.bind(subscription, handler),
-				function(error) { deferred.reject(error); }
-			);
-			return subscription;
-		};
-
-		subscription.done = function(handler) {
-			subscription.then(
-				angular.bind(subscription, handler)
-			);
-			return subscription;
-		};
-
-		subscription.error = function(handler) {
-			subscription.catch(
-				angular.bind(subscription, handler)
-			);
-			return subscription;
-		};
-
-		subscription.listen = function(handler) {
-			subscription.then(null, null,
-				angular.bind(subscription, handler)
-			);
-			return subscription;
-		};
-
-		subscription.cancel = function() {
-			if (activeSubscription) {
-				if (unsubscribeFunction) { unsubscribeFunction.call(subscription, activeSubscription); }
-				deferred.resolve();
-			} else {
-				parentPromise.cancel();
-			}
-		};
-
-		return subscription;
-	}
-});
-
-
-services.service('ModelService', function(RestService, SocketService, Subscriber) {
-
-	function ModelService() {
-
-		var subscribe = function(options) { return SocketService.subscribe(this.value); };
-		var unsubscribe = function(subscription) { return SocketService.unsubscribe(subscription); };
-		var cancelRequest = function(request) { return RestService.cancelRequest(request); };
-
-
-		this.create = function(collection, model) {
-			var endpoint = _getEndpointPath(collection);
-			var request = RestService.post(endpoint, model);
-			return Subscriber.create(request, subscribe, unsubscribe, cancelRequest);
-		};
-
-		this.retrieve = function(collection, id) {
-			var endpoint = _getEndpointPath(collection, id);
-			var request = RestService.get(endpoint);
-			return Subscriber.create(request, subscribe, unsubscribe, cancelRequest);
-		};
-
-		this.update = function(collection, id, model) {
-			var endpoint = _getEndpointPath(collection, id);
-			var request = RestService.get(endpoint);
-			return Subscriber.create(request, subscribe, unsubscribe, cancelRequest);
-		};
-
-		this.delete = function(collection, id) {
-			var endpoint = _getEndpointPath(collection, id);
-			var request = RestService.delete(endpoint);
-			return request;
-		};
-
-
-		function _getEndpointPath(collection, id) {
-			return collection + (id || (id === 0) ? '/' + id : '');
-		}
-	}
-
-	return new ModelService();
 });

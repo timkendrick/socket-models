@@ -5,11 +5,12 @@
 	<script src="/socket.io/socket.io.js"></script>
 	<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.19/angular.min.js"></script>
 	<script src="src/services.js"></script>
-	<script src="src/app.js"></script>
+	<script src="src/controllers.js"></script>
 	<script>
 		var bootstrap = angular.module('bootstrap', ['test-app']);
 		bootstrap.value('restApiUrl', '/api');
 		bootstrap.value('socketApiUrl', '/');
+		bootstrap.value('featuredQuoteId', 1);
 		bootstrap.value('quoteIds', [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]);
 	</script>
 	<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
@@ -17,13 +18,13 @@
 <body ng-app="bootstrap" ng-controller="TestCtrl">
 
 	<div class="container" style="padding-top: 40px;">
-	
+
 		<div class="jumbotron">
 			<h1>Today's top quote:</h1>
 			<p>
-				<strong>Value 1:</strong> <em style="padding-right: 50px;">{{ featuredQuote.value.values.value1 }}</em>
-				<strong>Value 2:</strong> <em style="padding-right: 50px;">{{ featuredQuote.value.values.value2 }}</em>
-				<strong>Value 3:</strong> <em style="padding-right: 50px;">{{ featuredQuote.value.values.value3 }}</em>
+				<strong>Value 1:</strong> <em style="padding-right: 50px;">{{ featuredQuote.get().values.value1 }}</em>
+				<strong>Value 2:</strong> <em style="padding-right: 50px;">{{ featuredQuote.get().values.value2 }}</em>
+				<strong>Value 3:</strong> <em style="padding-right: 50px;">{{ featuredQuote.get().values.value3 }}</em>
 			</p>
 		</div>
 
@@ -44,8 +45,8 @@
 				</thead>
 				<tbody>
 					<tr ng:repeat="quote in quotes">
-						<td ng:if="!quote.value">{{ '---' }}</td>
-						<td ng:repeat="(key, value) in quote.value.values">{{ value || '---' }}</td>
+						<td ng:if="!quote.get()">{{ '---' }}</td>
+						<td ng:repeat="(key, value) in quote.get().values">{{ value || '---' }}</td>
 					</tr>
 				</tbody>
 			</table>
