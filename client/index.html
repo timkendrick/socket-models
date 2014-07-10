@@ -10,9 +10,46 @@
 		var bootstrap = angular.module('bootstrap', ['test-app']);
 		bootstrap.value('restApiUrl', '/api');
 		bootstrap.value('socketApiUrl', '/');
+		bootstrap.value('numQuotes', 10);
 	</script>
+	<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 </head>
-<body ng-app="bootstrap">
-	<div ng-controller="TestCtrl"></div>
+<body ng-app="bootstrap" ng-controller="TestCtrl">
+
+	<div class="container" style="padding-top: 40px;">
+	
+		<div class="jumbotron">
+			<h1>Today's top quote:</h1>
+			<p>
+				<strong>Value 1:</strong> <em style="padding-right: 50px;">{{ featuredQuote.values.value1 }}</em>
+				<strong>Value 2:</strong> <em style="padding-right: 50px;">{{ featuredQuote.values.value2 }}</em>
+				<strong>Value 3:</strong> <em style="padding-right: 50px;">{{ featuredQuote.values.value3 }}</em>
+			</p>
+		</div>
+
+		<div class="well">
+			<h3>All Quotes:</h3>
+			<table class="table table-striped">
+				<thead>
+					<th>Value 1</th>
+					<th>Value 2</th>
+					<th>Value 3</th>
+					<th>Value 4</th>
+					<th>Value 5</th>
+					<th>Value 6</th>
+					<th>Value 7</th>
+					<th>Value 8</th>
+					<th>Value 9</th>
+					<th>Value 10</th>
+				</thead>
+				<tbody>
+					<tr ng:repeat="quote in allQuotes">
+						<td ng:if="!quote.values">{{ '---' }}</td>
+						<td ng:repeat="(key, value) in quote.values">{{ value || '---' }}</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
 </body>
 </html>
