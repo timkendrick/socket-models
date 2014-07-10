@@ -3,6 +3,35 @@
 var app = angular.module('test-app', ['services']);
 
 
+app.controller('TestCtrl', function TestCtrl($scope, DocketService, QuoteService) {
+		$scope.docket = null;
+		$scope.quote = null;
+
+		var quoteId = 1;
+
+		// var docketId = 1;
+		// var docketRequest = DocketService.retrieve(docketId)
+		// 	.done(function(model) {
+		// 		$scope.docket = model;
+		// 	});
+
+
+		var quoteSubscription = QuoteService.retrieve(quoteId).done(function(model) {
+				window.console.info('Loaded quote', model);
+			})
+			.subscribe(['value1', 'value2', 'value3']).listen(function(changes) {
+				window.console.info('Updated quote', changes);
+			});
+
+
+		$scope.$on('$destroy', function() {
+			// docketRequest.cancel();
+			quoteSubscription.cancel();
+		});
+	}
+);
+
+
 app.service('QuoteService', function(ModelService) {
 
  	function QuoteService() {
@@ -53,32 +82,3 @@ app.service('DocketService', function(ModelService) {
 
 	return new DocketService();
 });
-
-
-app.controller('TestCtrl', function TestCtrl($scope, DocketService, QuoteService) {
-		$scope.docket = null;
-		$scope.quote = null;
-
-		var docketId = null;
-		var quoteId = null;
-
-		var docketRequest = DocketService.retrieve(docketId)
-			.done(function(model) {
-				$scope.docket = model;
-			});
-
-
-		var quoteSubscription = QuoteService.retrieve(quoteId).done(function(model) {
-				window.console.info('Loaded quote', model);
-			})
-			.subscribe(['price']).listen(function(model) {
-				window.console.info('Updated quote', model);
-			});
-
-
-		$scope.$on('$destroy', function() {
-			docketRequest.cancel();
-			quoteSubscription.cancel();
-		});
-	}
-);

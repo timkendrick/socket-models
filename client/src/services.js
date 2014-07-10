@@ -44,6 +44,8 @@ services.service('RestService', function($q, $http, restApiUrl) {
 				requestType: 'json',
 				responseType: 'json',
 				timeout: canceler
+			}).then(function(response) {
+				return response.data;
 			});
 
 			var requestMetadata = {
@@ -85,17 +87,39 @@ services.service('SocketService', function($rootScope, $q, socketApiUrl) {
 
 	function SocketService() {
 		var subscriptions = [];
-		var socket = io.connect(socketApiUrl);
+		var socket = io(socketApiUrl);
+
+
+		var queuedActions = [];
+		var nextDigest = null;
+
+		function _asyncDigest(fn) {
+			if (fn) { queuedActions.push(fn); }
+			var alreadyUpdating = Boolean(nextDigest);
+			if (alreadyUpdating) { return; }
+			nextDigest = window.requestAnimationFrame(_handleTimeoutCompleted);
+
+			function _handleTimeoutCompleted() {
+				nextDigest = null;
+				$rootScope.$apply(function() {
+					queuedActions.forEach(function(fn) {
+						if (fn) { fn(); }
+					});
+					queuedActions.length = 0;
+				});
+			}
+		}
 
 		/*
 		 * The `update` event expects an array parameter that indicates a batch of changes
 		 * that have been made to the models. This takes the following format:
 		 *	[
-		 *		{ "type": "quote", "id": 3, "updates": { "price": 121.232, "spread": 12 } },
-		 *		{ "type": "docket", "id": 42, updates: { "name": "My docket 2" } }
+		 *		{ "token": "24f5b6156a2ac94785fbe77621f16de136aa0027", "type": "quote", "id": 3, "changes": { "price": 121.232, "spread": 12 } },
+		 *		{ "token": "288daff98fe83234499037a8b7208c5c3446da63", "type": "docket", "id": 42, changes: { "name": "My docket 2" } }
 		 *	]
 		 */
 		socket.on('update', function(batch) {
+			if (!angular.isArray(batch)) { batch = [batch]; }
 			_asyncDigest(function() {
 				_applyUpdates(batch);
 			});
@@ -105,40 +129,22 @@ services.service('SocketService', function($rootScope, $q, socketApiUrl) {
 					var modelType = changeset.type;
 					var modelId = changeset.id;
 					var fields = changeset.fields;
-					var updates = changeset.updates;
+					var changes = changeset.changes;
 
 					subscriptions.forEach(function(subscriptionMetadata) {
 						var isMatchingModel = (subscriptionMetadata.type === modelType) && (subscriptionMetadata.id === modelId);
 						if (isMatchingModel) {
 							var model = subscriptionMetadata.model;
 							var hasChanged = false;
-							for (var updatedField in updates) {
+							for (var updatedField in changes) {
 								if (fields && (fields.indexOf(updatedField) === -1)) { continue; }
-								model[updatedField] = updates[updatedField];
+								model.values[updatedField] = changes[updatedField];
 								hasChanged = true;
 							}
-							if (hasChanged) { subscriptionMetadata.deferred.notify(model); }
+							if (hasChanged) { subscriptionMetadata.deferred.notify(changes); }
 						}
 					});
 				});
-			}
-
-			var queuedActions = [];
-			var nextDigest = null;
-			function _asyncDigest(fn) {
-				if (fn) { queuedActions.push(fn); }
-				var alreadyUpdating = Boolean(nextDigest);
-				if (alreadyUpdating) { return; }
-				nextDigest = window.requestAnimationFrame(_handleTimeoutCompleted);
-
-				function _handleTimeoutCompleted() {
-					nextDigest = null;
-					$rootScope.$apply(function() {
-						queuedActions.forEach(function(fn) {
-							if (fn) { fn(); }
-						});
-					});
-				}
 			}
 		});
 
@@ -148,7 +154,7 @@ services.service('SocketService', function($rootScope, $q, socketApiUrl) {
 
 			var type = model.type;
 			var id = model.id;
-			var fields = watchedFields.slice();
+			var fields = (watchedFields ? watchedFields.slice() : null);
 			var token = this.generateToken();
 
 			var deferred = $q.defer();
