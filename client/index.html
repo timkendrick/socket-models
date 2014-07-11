@@ -45,9 +45,17 @@
 					<th>Field 10</th>
 				</thead>
 				<tbody>
-					<tr ng:repeat="quote in quotes">
-						<td ng:if="!quote.get()">{{ '---' }}</td>
-						<td ng:repeat="(key, value) in quote.get()">{{ value || '---' }}</td>
+					<tr ng:repeat="(model = quote.get()) in quotes">
+						<td>{{ model.field1 || '---' }}</td>
+						<td>{{ model.field2 || '---' }}</td>
+						<td>{{ model.field3 || '---' }}</td>
+						<td>{{ model.field4 || '---' }}</td>
+						<td>{{ model.field5 || '---' }}</td>
+						<td>{{ model.field6 || '---' }}</td>
+						<td>{{ model.field7 || '---' }}</td>
+						<td>{{ model.field8 || '---' }}</td>
+						<td>{{ model.field9 || '---' }}</td>
+						<td>{{ model.field10 || '---' }}</td>
 					</tr>
 				</tbody>
 			</table>
