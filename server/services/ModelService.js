@@ -6,7 +6,104 @@ function ModelService() {
 	var MIN_UPDATE_INTERVAL = 500;
 	var MAX_UPDATE_INTERVAL = 1500;
 
+	this.types = {};
+	this.data = {};
+
 	var modelUpdaters = [];
+
+	this.registerType = function(type, fieldNames) {
+		if (!type) { throw new Error('No type name specified'); }
+		if (!fieldNames) { throw new Error('No field names specified'); }
+		if (this.existsType(type)) { throw new Error('Type name "' + type + '" already exists'); }
+
+		var typeMetadata = {
+			fields: fieldNames
+		};
+		this.types[type] = typeMetadata;
+	};
+
+	this.create = function(type, id) {
+		if (!id) { throw new Error('No ID specified'); }
+		if (!this.existsType(type)) { throw new Error('Invalid type specified: "' + type + '"'); }
+		if (this.exists(type, id)) { throw new Error('ID "' + id + '" already exists'); }
+
+		var typeMetadata = this.types[type];
+		var model = _createModel(type, typeMetadata.fields, id);
+
+		if (!this.data.hasOwnProperty(type)) { this.data[type] = []; }
+		this.data[type][id] = model;
+
+		return model;
+
+
+		function _createModel(type, typeFields, id) {
+			var model = {
+				type: type,
+				id: id,
+				value: _generateRandomModelFieldValues(typeFields)
+			};
+			return model;
+
+
+			function _generateRandomModelFieldValues(fieldNames) {
+				return fieldNames.reduce(function(values, fieldName) {
+					values[fieldName] = _generateRandomValue();
+					return values;
+				}, {});
+			}
+
+			function _generateRandomValue() {
+				return Number((Math.random() * 100).toFixed(1));
+			}
+		}
+	};
+
+	this.retrieve = function(type, id) {
+		if (!type) { throw new Error('No type name specified'); }
+		if (!id) { throw new Error('No ID specified'); }
+		if (!this.existsType(type)) { throw new Error('Invalid type specified: "' + type + '"'); }
+
+		if (!this.exists(type, id)) { return null; }
+		return this.data[type][id];
+	};
+
+	this.update = function(type, id, model) {
+		if (!type) { throw new Error('No type name specified'); }
+		if (!id) { throw new Error('No ID specified'); }
+		if (!this.exists(type, id)) { throw new Error('Invalid ID specified: "' + id + '"'); }
+		if (!model) { throw new Error('No model specified'); }
+
+		var existingModel = this.data[type][id];
+		for (var field in model) {
+			existingModel[field] = model[field];
+		}
+		return existingModel;
+	};
+
+	this.delete = function(type, id) {
+		if (!type) { throw new Error('No type name specified'); }
+		if (!id) { throw new Error('No ID specified'); }
+		if (!this.exists(type, id)) { throw new Error('Invalid ID specified: "' + id + '"'); }
+
+		var existingModel = this.data[type][id];
+		delete this.data[type][id];
+		return existingModel;
+	};
+
+	this.exists = function(type, id) {
+		if (!type) { throw new Error('No type name specified'); }
+		if (!id) { throw new Error('No ID specified'); }
+
+		if (!this.existsType(type)) { return false; }
+		var typeModels = this.data[type];
+		if (!typeModels) { return false; }
+		return Boolean(typeModels[id]);
+	};
+
+	this.existsType = function(type) {
+		if (!type) { throw new Error('No type name specified'); }
+		return this.types.hasOwnProperty(type);
+	};
 
 	this.subscribe = function(model, fields, callback) {
 		if (!model) { throw new Error('Invalid model specified'); }

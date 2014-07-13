@@ -1,53 +1,32 @@
 'use strict';
 
+var ModelService = require('./ModelService');
+
 function QuoteService() {
 	this.items = [];
 
+	var TYPE_NAME = 'quote';
 	var FIELD_NAMES = ['field1', 'field2', 'field3', 'field4', 'field5', 'field6', 'field7', 'field8', 'field9', 'field10'];
 
-	this.create = function(id) {
-		if (!id) { throw new Error('No ID specified'); }
-		if (this.exists(id)) { throw new Error('ID "%d" already exists', id); }
+	ModelService.registerType(TYPE_NAME, FIELD_NAMES);
 
-		var quote = _createQuote(id);
-		this.items[id] = quote;
-		return quote;
+
+	this.create = function(id, model) {
+		return ModelService.create(TYPE_NAME, id, model);
+	};
+
+	this.retrieve = function(id) {
+		return ModelService.retrieve(TYPE_NAME, id);
 	};
 
 	this.exists = function(id) {
-		return Boolean(this.items[id]);
-	};
-
-	this.get = function(id) {
-		if (!id) { throw new Error('No ID specified'); }
-		return this.items[id] || this.create(id);
+		return ModelService.exists(TYPE_NAME, id);
 	};
 
 	this.getFeatured = function() {
 		var featuredId = 1 + Math.floor(Math.random() * 100);
-		return this.get(featuredId) || this.create(featuredId);
+		return ModelService.retrieve(TYPE_NAME, featuredId) || ModelService.create(TYPE_NAME, featuredId);
 	};
-
-
-	function _createQuote(id) {
-		var quote = {
-			type: 'quote',
-			id: id,
-			value: _generateRandomQuoteFieldValues(FIELD_NAMES)
-		};
-		return quote;
-
-		function _generateRandomQuoteFieldValues(fieldNames) {
-			return fieldNames.reduce(function(values, fieldName) {
-				values[fieldName] = _generateRandomValue();
-				return values;
-			}, {});
-		}
-
-		function _generateRandomValue() {
-			return Number((Math.random() * 100).toFixed(1));
-		}
-	}
 }
 
 module.exports = new QuoteService();

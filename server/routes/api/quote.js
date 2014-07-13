@@ -15,7 +15,7 @@ module.exports = (function() {
 
 	app.get('/:id', function(req, res, next) {
 		var itemId = Number(req.params.id);
-		var item = QuoteService.get(itemId);
+		var item = QuoteService.retrieve(itemId) || QuoteService.create(itemId);
 		res.json(item);
 	});
 

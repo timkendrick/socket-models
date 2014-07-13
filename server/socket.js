@@ -3,18 +3,13 @@
 var io = require('socket.io');
 
 var ModelService = require('./services/ModelService');
-var QuoteService = require('./services/QuoteService');
 
 
 module.exports = function(httpServer) {
 	var server = io(httpServer);
 
-	var services = {
-		quote: QuoteService
-	};
-
 	_initLogging(server);
-	_initApi(server, services, function(error) {
+	_initApi(server, function(error) {
 		console.error(error.toString());
 	});
 
@@ -35,7 +30,7 @@ module.exports = function(httpServer) {
 		});
 	}
 
-	function _initApi(socket, services, callback) {
+	function _initApi(socket, callback) {
 		server.on('connection', function(socket) {
 
 			var subscriptions = {};
@@ -43,10 +38,8 @@ module.exports = function(httpServer) {
 			socket.on('subscribe', function(token, type, id, fields) {
 				if (!token) { return callback(new Error('No subscription token specified')); }
 				if (!/[0-9a-f]{40}/.test(token)) { return callback(new Error('Invalid subscription token specified: "' + token + '"')); }
-				if (!services.hasOwnProperty(type)) { return callback(new Error('Invalid collection type: "' + type + '"')); }
 
-				var collectionService = services[type];
-				var model = collectionService.get(id);
+				var model = ModelService.retrieve(type, id);
 				var subscription = ModelService.subscribe(model, fields, _handleModelValuesUpdated);
 				subscriptions[token] = subscription;
 
