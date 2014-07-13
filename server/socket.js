@@ -75,7 +75,8 @@ module.exports = function(httpServer) {
 
 			function _emitChanges(token, type, id, changes) {
 				console.info('Emitting updates to %s', token);
-				socket.emit(token, { token: token, type: type, id: id, changes: changes });
+				var timestamp = Date.now();
+				socket.emit(token, { time: timestamp, token: token, type: type, id: id, changes: changes });
 			}
 		});
 	}

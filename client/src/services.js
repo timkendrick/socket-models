@@ -198,7 +198,7 @@ services.service('SocketService', function($q, socketApiUrl, AsyncDigestService,
 			/*
 			 * Subscription changesets expect the following format:
 			 *
-			 * 	{ "token": "24f5b6156a2ac94785fbe77621f16de136aa0027", "type": "quote", "id": 3, "changes": { "price": 121.232, "spread": 12 } }
+			 * 	{ "time": 1234567890000, "token": "24f5b6156a2ac94785fbe77621f16de136aa0027", "type": "quote", "id": 3, "changes": { "price": 121.232, "spread": 12 } }
 			 */
 			function _handleDataReceived(changeset) {
 				AsyncDigestService.apply(function() {
